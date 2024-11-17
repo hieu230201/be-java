@@ -16,6 +16,8 @@ public enum ErrorCode implements BaseErrorCode {
     HTTP_STATUS_CODE_EXCEPTION(1007, "", HttpStatus.BAD_REQUEST),
     SERVER_ERROR(13, "server.error", HttpStatus.UNPROCESSABLE_ENTITY),
     USER_NOT_FOUND(7, "username.not.found", HttpStatus.UNPROCESSABLE_ENTITY),
+    CALL_API_ERROR(2000, "", HttpStatus.BAD_REQUEST),
+    CALL_API_HTTP_ERROR(2001, "", HttpStatus.BAD_REQUEST),
     UNPROCESSABLE_ENTITY(1008, "", HttpStatus.UNPROCESSABLE_ENTITY);
 
 
