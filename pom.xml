@@ -10,13 +10,14 @@
     </parent>
     <groupId>org.example</groupId>
     <artifactId>basewebsub</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.1</version>
     <name>basewebsub</name>
     <description>basewebsub</description>
     <packaging>war</packaging>
     <properties>
         <java.version>17</java.version>
     </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -209,10 +210,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-test</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.jetbrains</groupId>
             <artifactId>annotations</artifactId>
             <version>RELEASE</version>
@@ -269,6 +266,15 @@
 
     </dependencies>
 
+    <distributionManagement>
+        <repository>
+            <id>test_maven</id> <!-- id này cần khớp với id bạn đã định nghĩa trong settings.xml -->
+            <name>test_maven</name>
+            <url>http://localhost:8081/repository/test_maven/</url>
+        </repository>
+    </distributionManagement>
+
+
     <build>
         <plugins>
             <plugin>
@@ -285,5 +291,6 @@
             </plugin>
         </plugins>
     </build>
+
 
 </project>

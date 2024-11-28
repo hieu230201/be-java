@@ -39,9 +39,6 @@ public class MenuServiceImpl implements MenuService {
 
     @Override
     public MenuEntity deleteMenuById(Long id) {
-        if (id == null) {
-            return null;
-        }
         MenuEntity menuEntity = menuRepo.findById(id).orElse(null);
         if (menuEntity != null) {
             menuRepo.delete(menuEntity);
