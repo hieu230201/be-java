@@ -1,0 +1,93 @@
+   ┌──────────────────────┐
+   │       CLIENT         │
+   │ (Web/Mobile/Postman) │
+   └──────────┬───────────┘
+              │  1. Gửi HTTP Request
+              ▼
+====================================================================
+ PHẦN 1 – LỚP LOGGING FILTER (CHẠY ĐẦU TIÊN)
+====================================================================
+   CheckAuthCookieFilter (OncePerRequestFilter) 
+   ─────────────────────────────────────────────
+   Class: CheckAuthCookieFilter
+   Chức năng:
+   ✅ Sinh UUID cho request (Trace ID)
+   ✅ Wrap request → đọc và log body (nếu không phải multipart)
+   ✅ Ghi log input qua logRequest()
+   ✅ Ghi trace-id vào ThreadContext để dùng chung trong tất cả log tiếp theo
+
+   → Cho phép request đi tiếp xuống Security Filter Chain
+              │
+              ▼
+====================================================================
+ PHẦN 2 – SECURITY FILTER CHAIN & TOKEN VALIDATION
+====================================================================
+   (Được kích hoạt bởi @EnableResourceServer)
+   Class điều phối chính: OAuth2ResourceServerConfig
+   ─────────────────────────────────────────────
+
+   BƯỚC KIỂM TRA QUYỀN TRUY CẬP URL
+   configAnonymousUrl() trong OAuth2ResourceServerConfig
+   - Cho phép một số URL được phép gọi **không cần token**
+     (lấy từ SecurityConfigSettings)
+
+   Nếu URL không thuộc danh sách public → yêu cầu token
+              │
+              ▼
+   BƯỚC LẤY TOKEN từ Header: Authorization: Bearer <token>
+              │
+              ▼
+   Token được đưa đến lớp kiểm tra chữ ký:
+
+   TokenStore → JwtTokenStore
+   JwtTokenStore → dùng JwtAccessTokenConverter để:
+       ✅ Decode token
+       ✅ Parse Claims
+       ✅ Kiểm tra Expiration
+       ✅ Verify chữ ký bằng Public Key
+   ─────────────────────────────────────────────
+   Class: JwtAccessTokenConverter
+   converter.setVerifierKey(jwtPublicKey)
+   → Public key được lấy từ application.yml
+              │
+              ├── Nếu token HỢP LỆ → xác thực thành công → chuyển vào Controller
+              │
+              └── Nếu token SAI / HẾT HẠN →
+                        Gọi:
+                        MyAuthenticationEntryPoint.commence()
+                        ↓
+                        Trả JSON lỗi:
+                        - TOKEN_INVALID
+                        - TOKEN_EXPIRED
+                        (tùy theo exception message)
+====================================================================
+ PHẦN 3 – BUSINESS LOGIC
+====================================================================
+              ▼
+   Controller / Service / Repository
+   → Xử lý nghiệp vụ và trả về dữ liệu (`Object`, `String`, `ResponseEntity`, v.v.)
+
+====================================================================
+ PHẦN 4 – RESPONSE WRAPPER (XỬ LÝ TRƯỚC KHI TRẢ RA CLIENT)
+====================================================================
+              ▼
+   GlobalResponseWrapper (ResponseBodyAdvice)
+   ─────────────────────────────────────────────
+   Chức năng:
+   ✅ Nếu controller trả về `Object` → wrap thành ResponseData.success(...)
+   ✅ Nếu controller trả về `String` → convert thành JSON chuẩn
+   ✅ Nếu controller trả về ResponseData → giữ nguyên
+              │
+              ▼
+====================================================================
+ PHẦN 5 – LOG RESPONSE (CHẠY CUỐI)
+====================================================================
+   CheckAuthCookieFilter (lần 2 – phần finally)
+   ─────────────────────────────────────────────
+   logResponse(responseWrapper,…)
+   ✅ Log Response JSON
+   ✅ Dọn dẹp ThreadContext (xóa UUID)
+              │
+              ▼
+   CLIENT NHẬN RESPONSE HOÀN CHỈNH
+====================================================================
